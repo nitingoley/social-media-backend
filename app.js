@@ -12,8 +12,8 @@ const userModel = require('./models/user.js');
  const authRouth =  require('./routes/auth.js');
 const cookieParser = require("cookie-parser");
 
- 
-
+ const userCon = require('./routes/user.js');
+const verifyToken = require('./middleware/verifytoken.js')
 
 
 
@@ -23,9 +23,10 @@ app.use(express.json());
 
 app.use(cookieParser());
 
+app.use("/api/auth" , authRouth);
 
-app.use("/auth" , authRouth);
 
+app.use('/api/user', userCon);
 
  
 

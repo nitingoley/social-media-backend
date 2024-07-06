@@ -1,2 +1,5 @@
 /.vscode/      # Ignore Visual Studio Code settings
-/node_modules/ # Ignore node_modules for all projects
+*node_modules/ # Ignore node_modules for all projects
+
+
+.env

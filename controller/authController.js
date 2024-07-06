@@ -1,7 +1,8 @@
 const User = require('../models/user');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
+const router = require('../routes/auth');
+const {CustomError}  = require('../middleware/error')
 
 
 
@@ -63,4 +64,47 @@ const loginControl = async (req, res, next) => {
 
 
 
-module.exports =  {registerControl , loginControl};
+// for logout 
+
+
+
+const logoutController = async(req , res)=>{
+  try {
+    res.clearCookie("token" , {sameSite: "none", secure: true}).status(200)
+    .json("User logout sucessfully");
+    
+  } catch (error) {
+    res.status(400).json(error);
+  }
+}
+
+
+// fetech the data.....
+
+const refetchUserController=async(req,res,next)=>{
+  const token=req.cookies.token
+ 
+  jwt.verify(token,process.env.JWT_SECRET,{},async(err,data)=>{
+          
+      if(err){
+          throw new CustomError(err,404)
+      }
+      try{
+        const id=data._id
+        const user=await User.findOne({_id:id})
+        res.status(200).json(user)
+      }
+      catch(error){
+          next(error)
+      }
+  })
+}
+
+
+
+
+
+
+
+
+module.exports =  {registerControl , loginControl , logoutController , refetchUserController};
