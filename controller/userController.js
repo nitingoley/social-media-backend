@@ -81,7 +81,130 @@ const FollowUser =  async(req , res , next)=>{
 } 
 
 
+// for unfollow user
 
+const unfollow = async(req , res , next)=>{
+    const{userId} = req.params
+    const {_id} = req.body
+
+    try {
+        if(userId == _id){
+            throw new CustomError("You can not follow this user")
+        }
+        const userToUnFollow = await User.findById(userId)
+       const loggedInUser = await User.findById(_id);
+
+       if(!userToUnFollow || !loggedInUser){
+        throw new CustomError("User not found");
+       }
+
+       if(!loggedInUser.following.includes(userId)){
+        throw new CustomError('Not reached out' , 404)
+       }
+
+        loggedInUser.following = loggedInUser.following.filter(id=>id.toString()!==userId);
+        userToUnFollow.followers = userToUnFollow.followers.filter(id=> id.toString()!==_id)
+  
+         await loggedInUser.save();
+         await userToUnFollow.save();
+         res.status(200).json({message: "Sucessfully unfollowed user !"})
+    } catch (error) {
+       next();        
+    }
+}
+
+
+
+// block user 
+
+const blockUser  = async(req , res, next)=>{
+ const {userId} = req.params
+ const {_id} = req.body
+
+ try {
+    if(userId === _id){
+        throw new CustomError("You cam not block user" , 500);
+    }
+
+    const userToBlock = await User.findById(userId)
+    const loggedInUser = await User.findById(_id);
+
+    if(!userToBlock || !loggedInUser){
+        throw new CustomError('Not found user' ,400)
+    }
+
+    if(loggedInUser.blockList.includes(userId)) {
+        throw new CustomError('This user is already blocked', 400)
+    }
+    loggedInUser.blockList.push(userId);
+
+    loggedInUser.following = loggedInUser.following.filter(id=> id.toString()!==userId)
+    userToBlock.followers = userToBlock.followers.filter(id => id.toString()!==_id);
+
+    await loggedInUser.save();
+    await userToBlock.save();
+
+    res.status(200).json({message: 'Sucessfully blocked user'});
+ } catch (error) {
+    next(error);
+    
+ }
+}
+
+
+// unblock user 
+
+const unblockUser = async(req , res , next)=>{
+    const {userId} = req.params
+    const {_id} = req.body;        
+        try{
+            if(userId===_id){
+                throw new CustomError("You can not unblock yourself",500)
+            }
+    
+            const userToUnblock=await User.findById(userId)
+            const loggedInUser=await User.findById(_id)
+    
+            if(!userToUnblock || !loggedInUser){
+                throw new CustomError("User not found!",404)
+            }
+    
+            if(!loggedInUser.blockList.includes(userId)){
+                throw new CustomError("Not blocking is user!",400)
+            }
+    
+            loggedInUser.blockList=loggedInUser.blockList.filter(id=>id.toString()!=userId)
+    
+            await loggedInUser.save()
+            
+            res.status(200).json({message:"Successfully unblocked user!"})
+    
+        
+    } catch (error) {
+        next(error);
+    }
+}
+
+
+
+// get block user list 
+
+
+const blockList = async(req , res , next)=>{
+    const {userId} = req.params
+
+    try {
+       const user  = await User.findById(userId).populate("blockList" , "username fullName profilePicture");
+       if(!user){
+        throw new CustomError('User not found' , 404);
+       }
+
+       const {blockList,...data}= user;
+           res.status(200).json(blockList);
+    } catch (error) {
+        next(error);
+    }
+}
 
 
 
@@ -90,3 +213,7 @@ const FollowUser =  async(req , res , next)=>{
 module.exports =   getUserController;
 module.exports = updateUserController;
 module.exports = FollowUser;
+module.exports = unfollow;
+module.exports = blockUser;
+module.exports = unblockUser;
+module.exports = blockList;
