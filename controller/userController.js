@@ -1,6 +1,8 @@
 const User = require('../models/user');
 const {CustomError} = require('../middleware/error')
-
+const Post = require('../models/post');
+const comment = require('../models/comment');
+const story = require('../models/story');
 
 
 const getUserController = async(req  , res, next)=>{
@@ -207,6 +209,55 @@ const blockList = async(req , res , next)=>{
 }
 
 
+// delete user sucessfully 
+
+const deleteUserController = async(req  , res , next)=>{
+
+    const {userId} = req.params;
+
+    try {
+        const userToDelete = await User.findById(userId);
+
+        if(!userToDelete){
+          throw new CustomError('User not found');
+        }
+
+        await Post.deleteMany({user:userId})
+        await Post.deleteMany({"comments.user": userId});
+        await Post.deleteMany({'comments.replies.user': userId});
+        await comment.deleteMany({user:userId});
+        await story.deleteMany({user:userId});
+        await Post.updateMany({likes: userId}, {$pull:{likes:userId}})
+        await User.updateMany(
+            {_id:{$in:userToDelete.following}},
+            {$pull:{followers:userId}})
+        await comment.updateMany({},{$pull:{likes:userId}})    
+        await comment.updateMany({'replies.likes': userId},{$pull:{"replies.likes":userId}});
+        await Post.updateMany({}, {$pull: {likes:userId}})
+
+        const replyComment = await comment.find({'replies.user': userId})
+
+        await Promise.all(
+            replyComment.map(async(comment)=>{
+                comment.replies = comment.replies.filter((reply)=>reply.user.toString()!=userId)
+                await  comment.save();s
+            })
+        )
+
+        await userToDelete.deleteOne()
+        res.status(200).json({message: 'Everything fine user associated with system'})
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+
+
+
+
+
+
 
 
 
@@ -217,3 +268,4 @@ module.exports = unfollow;
 module.exports = blockUser;
 module.exports = unblockUser;
 module.exports = blockList;
+module.exports = deleteUserController;
