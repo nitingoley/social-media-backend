@@ -11,7 +11,7 @@ const connectDB = require('./config/db.js');
 const userModel = require('./models/user.js');
  const authRouth =  require('./routes/auth.js');
 const cookieParser = require("cookie-parser");
-
+const path = require('path');
  const userCon = require('./routes/user.js');
 const verifyToken = require('./middleware/verifytoken.js')
 
@@ -20,12 +20,11 @@ const verifyToken = require('./middleware/verifytoken.js')
 
 app.use(express.json());
 // app.use(express.urlencoded())ap
-
 app.use(cookieParser());
+app.use("/uploads" , express.static(path.join(__dirname, "/uploads")))
+
 
 app.use("/api/auth" , authRouth);
-
-
 app.use('/api/user', userCon);
 
  

@@ -254,9 +254,66 @@ const deleteUserController = async(req  , res , next)=>{
 
 
 
+const serachController = async (req, res , next)=>{
+    const {query} = req.params
+  try {
+    const users = await User.find({
+        $or:[
+            {username: {$regx:new RegExp(query, 'n')}},
+            {fullName: {$regx:new RegExp(query , 'n')}}
+        ]
+    })
+    res.status(200).json({users});
+  } catch (error) {
+    next(error); 
+  }
+}
+
+
+// generate profile photo link download
+
+const generateFile = (filename)=>{
+    return process.env.URL+ `/uploads/${filename}`
+}
 
 
 
+// upload profile picture 
+
+const uploadProfilePictureController=async(req,res,next)=>{
+    const {userId}=req.params
+    const filename=req.file
+    try{
+        const user=await User.findByIdAndUpdate(userId,{profile:generateFile(filename)},{new:true})
+        if(!user){
+            throw new CustomError("User not found!",404)
+        }
+
+        res.status(200).json({message:"Profile picture updated successfully!",user})
+
+    }
+    catch(error){
+        next(error)
+    }
+}
+
+
+// cover photo  upload 
+
+const coverPicture = async(req, res , next)=>{
+  const {userId} = req.params
+  const {filename} = req.file
+  try {
+    const user = await User.findByIdAndUpdate(userId , {coverPhoto: generateFile(filename)}, {new:true});
+
+    if(!user){
+        throw new CustomError('User not found' , 404)
+    }
+    res.status(200).json({message: 'Cover photo sucessfully uploaded', user});
+  } catch (error) {
+    next(error);
+  }
+}
 
 
 
@@ -269,3 +326,6 @@ module.exports = blockUser;
 module.exports = unblockUser;
 module.exports = blockList;
 module.exports = deleteUserController;
+module.exports = serachController;
+module.exports = uploadProfilePictureController;
+module.exports = coverPicture;
